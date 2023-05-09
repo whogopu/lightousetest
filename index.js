@@ -1,41 +1,29 @@
-// Import http library
-import http from "http"
-import url  from "url";
+import express from 'express'
+import url from "url";
 import { generateLightHouseReport } from "./scripts/genrateLightHouseReport.js"
-// use env variable to define tcp/ip port with a default
 const PORT = process.env.PORT || 8080
-//create our server object
-const server = http.createServer()
-// We define a function that runs in response a request event
-server.on("request", async(request, response) => {
-  // handle request based on method then URL
 
+const app = express()
+
+app.get('/', async (req, res) => {
   try {
-  const parsedUrl = url.parse(request.url, true);
-  const query = parsedUrl.query;
+    const parsedUrl = url.parse(req.url, true);
+    const query = parsedUrl.query;
 
-  if(query.url) {
-    const resp = await generateLightHouseReport(query.url);
-    response.statusCode = 200
-    response.write(resp);
-    response.end()
-      
+    let defaultUrl = 'https://www.99acres.com/property-in-noida-ffid'
+    let { url: queryUrl = defaultUrl } = query;
+
+    console.log('queryUlr', queryUrl)
+    const reportRes = await generateLightHouseReport(queryUrl, 'json');
+    // const reportRes = await generateLightHouseReport(queryUrl, 'html');
+
+    // res.send('Hello World!' + queryUrl)
+    res.send(reportRes)
+  } catch (e) {
+    res.status(500).send("Something went wrong");
   }
-
-  // console.log(query);
-
-  // const resp = await generateLightHouseReport();
-  response.statusCode = 200
-  // response.write(resp);
-  response.end()
-} catch(e) {
-  response.statusCode = 500
-  // response.write(resp);
-  response.end()
-}
 })
-// get the server to start listening
-server.listen(PORT, err => {
-  // error checking
-  err ? console.error(err) : console.log(`listening on port http://localhost:${PORT}`)
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port http://localhost:${PORT}`)
 })
